@@ -1,0 +1,62 @@
+body {
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+
+#calculator {
+    background-color:#ffb6c1;
+    /* flex-grow: 1; */
+    width: max-content;
+    height: max-content;
+    padding: 1rem;
+    
+    display: flex;
+    flex-direction: column;
+    align-items: space-around;
+}
+
+#display {
+    margin-bottom: 1rem;
+    background-color: lightcoral;
+    height: 4rem;
+    display: flex;
+    flex-direction: row-reverse;
+    align-items: end;
+
+}
+
+#keypad {
+    /* flex-grow: 1; */
+    flex-shrink: 1;
+    display: flex;
+    justify-content: space-around;
+    /* align-items: stretch; */
+    gap: 2em;
+}
+
+.digits, .operations {
+    /* margin: 10px; */
+    /* gap: 5px; */
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+
+.actions {
+    margin-top: 1.25rem;
+} 
+
+button {
+    /* margin: 0; */
+    font-size: 1rem;
+    font-weight: bolder;
+    color: seagreen;
+    border-style: none;
+    width:  3rem;
+    height: 3rem;
+}
+
