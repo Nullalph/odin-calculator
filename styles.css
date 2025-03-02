@@ -21,7 +21,7 @@ body {
 #display {
     margin-bottom: 1rem;
     background-color: lightcoral;
-    height: 4rem;
+    height: 4rem;   
     display: flex;
     flex-direction: row-reverse;
     align-items: end;
@@ -54,8 +54,9 @@ button {
     /* margin: 0; */
     font-size: 1rem;
     font-weight: bolder;
+    text-align: center;
     color: seagreen;
-    border-style: none;
+    /* border-style: none; */
     width:  3rem;
     height: 3rem;
 }

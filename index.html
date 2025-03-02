@@ -9,9 +9,7 @@
 </head>
 <body>
     <div id="calculator">
-        <div id="display">
-            3.141592653
-        </div>
+        <div id="display">0</div>
         <div id="keypad">
             <div class="digits">
                 <div class="inputs">
@@ -35,17 +33,17 @@
                     <button>%</button>
                 </div>
                 <div class="inputs">
-                    <button class="actions">&leftarrow;</button>
-                    <button class="actions">ans</button>
-                    <button class="actions">&equals;</button>
+                    <button class="actions" id="undo">&leftarrow;</button>
+                    <button class="actions" id="ans">ans</button>
+                    <button class="actions" id="equals">&equals;</button>
                 </div>    
             </div>
             <div class="operations">
-                <button>&divide;</button>
-                <button>&times;</button>
-                <button>&minus;</button>
-                <button>&plus;</button>
-                <button class="actions">clear</button>
+                <button class="operation" id="di">&divide;</button>
+                <button class="operation" id="mu">&times;</button>
+                <button class="operation" id="su">&minus;</button>
+                <button class="operation" id="ad">&plus;</button>
+                <button class="actions" id="clear">clear</button>
             </div>
         </div>
     </div>
