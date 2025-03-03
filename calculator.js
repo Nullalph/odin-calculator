@@ -46,25 +46,24 @@ function undo(str, n) {
 }
 
 function enteredDigit(event) {
-
-
+    event.preventDefault();
     if (event.target.className === "digit") {
         if (calc.leadingZero) {
             switch (event.target.textContent) {
                 case "0":
                     display.textContent += (calc.previousOp === "none") ? "" : "0";
-                    calc.previousOp = "none";
                     break;
                 default:
                     calc.leadingZero = false;
                     display.textContent = (calc.previousOp === "none") ?
                         (undo(display.textContent, 1) + event.target.textContent) :
-                        display.textContent;
-                        calc.previousOp = "none";
-                        calc.initialState = false;
+                        display.textContent + event.target.textContent;
+                    calc.initialState = false;
             }
+            calc.previousOp = "none";
             return;
         }
+        calc.previousOp = "none";
         display.textContent += event.target.textContent;
     }
     else if (event.target.id === "decimal") {
@@ -82,6 +81,7 @@ function enteredDigit(event) {
 }
 
 function enteredOperator(event) {
+    event.preventDefault();
     if (calc.initialState) {
         return;
     }
@@ -94,6 +94,7 @@ function enteredOperator(event) {
         calc.previousOp = event.target.id;
         calc.enteringNumber = false;
         calc.leadingZero = true;
+        calc.decimalPresent = false;
         return;
     }
 
@@ -103,11 +104,6 @@ function enteredOperator(event) {
         case "mu":
         case "di":
             calc.enteringNumber = (event.target.id === "su");
-
-            // display.textContent += 
-            //     !calc.enteringNumber ? event.target.textContent : "";
-            // calc.previousOp = event.target.id;
-            // return;
         default:
             display.textContent = !calc.enteringNumber ?
                 (undo(display.textContent, 1) + event.target.textContent) :
