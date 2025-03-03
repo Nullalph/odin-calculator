@@ -46,30 +46,26 @@ function undo(str, n) {
 }
 
 function enteredDigit(event) {
+
+
     if (event.target.className === "digit") {
-
-        if (event.target.textContent === "0") {
-            if (calc.leadingZero) {
-                return;
+        if (calc.leadingZero) {
+            switch (event.target.textContent) {
+                case "0":
+                    display.textContent += (calc.previousOp === "none") ? "" : "0";
+                    calc.previousOp = "none";
+                    break;
+                default:
+                    calc.leadingZero = false;
+                    display.textContent = (calc.previousOp === "none") ?
+                        (undo(display.textContent, 1) + event.target.textContent) :
+                        display.textContent;
+                        calc.previousOp = "none";
+                        calc.initialState = false;
             }
+            return;
         }
-        if (calc.leadingZero) 
-            display.textContent = undo(display.textContent, 1);
-
-
-        if (!calc.enteringNumber) {
-            calc.enteringNumber = true;
-            calc.decimalPresent = false;
-            calc.leadingZero = true;
-            calc.previousOp = "none";
-        }
-
-        
-       
         display.textContent += event.target.textContent;
-        calc.leadingZero = false;
-        calc.initialState = false;
-        return;
     }
     else if (event.target.id === "decimal") {
         if (calc.decimalPresent) return;
@@ -79,6 +75,7 @@ function enteredDigit(event) {
             calc.leadingZero = false;
             calc.initialState = false;
             calc.enteringNumber = true;
+            calc.previousOp = "none";
         }
     }
 
@@ -92,32 +89,34 @@ function enteredOperator(event) {
     if (event.target.className != "operation") return;
     
 
-    if (!calc.enteringNumber) {
-        switch (calc.previousOp) {
-            case "di":
-            case "mu":
-                display.textContent += (event.target.id === "su") ?
-                    event.target.textContent : "";
-                calc.previousOp = (event.target.id === "su") ?
-                    "su" : calc.previousOp;
-                calc.enteringNumber = true;
-                return;
-            default:
-                display.textContent = 
-                    undo(display.textContent, 1) + event.target.textContent;
-                return;
-
-
-        }
+    if (calc.previousOp === "none") {
+        display.textContent += event.target.textContent;
+        calc.previousOp = event.target.id;
+        calc.enteringNumber = false;
+        calc.leadingZero = true;
+        return;
     }
-    display.textContent += event.target.textContent;
-    calc.previousOp = event.target.id;
-    calc.enteringNumber = false;
-    
-    // if (event.target.className === "operation") {
-    //     display.textContent += event.target.textContent;
-    //     calc.enteringNumber = false;
-    // }
+
+    if (calc.enteringNumber) return;
+
+    switch (calc.previousOp) {
+        case "mu":
+        case "di":
+            calc.enteringNumber = (event.target.id === "su");
+
+            // display.textContent += 
+            //     !calc.enteringNumber ? event.target.textContent : "";
+            // calc.previousOp = event.target.id;
+            // return;
+        default:
+            display.textContent = !calc.enteringNumber ?
+                (undo(display.textContent, 1) + event.target.textContent) :
+                display.textContent + event.target.textContent;
+            calc.previousOp = event.target.id;
+    }
+
+
+
 
 }
 
