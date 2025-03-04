@@ -39,7 +39,7 @@ function operate(op, x, y) {
 
 const display = document.querySelector("#display");
 
-let expression = "";
+// let expression = "";
 
 function undo(str, n) {
     return str.substr(0, str.length - n);
@@ -49,6 +49,10 @@ function enteredDigit(event) {
     event.preventDefault();
     if (event.target.className === "digit") {
         if (calc.leadingZero) {
+            if (display.textContent === "-" && event.target.textContent === "0") {
+                clearDisplay(false);
+                return;
+            }
             switch (event.target.textContent) {
                 case "0":
                     display.textContent += (calc.previousOp === "none") ? "" : "0";
@@ -83,6 +87,12 @@ function enteredDigit(event) {
 function enteredOperator(event) {
     event.preventDefault();
     if (calc.initialState) {
+        if (event.target.id === "su") {
+            display.textContent = "-";
+            calc.initialState = false;
+            calc.enteringNumber = true;
+            calc.previousOp = "su";
+        }
         return;
     }
 
@@ -107,7 +117,7 @@ function enteredOperator(event) {
         default:
             display.textContent = !calc.enteringNumber ?
                 (undo(display.textContent, 1) + event.target.textContent) :
-                display.textContent + event.target.textContent;
+                display.textContent + "-";
             calc.previousOp = event.target.id;
     }
 
@@ -124,18 +134,52 @@ const operators = document.querySelector(".operations");
 operators.addEventListener("click", enteredOperator);
 
 const clearBtn = document.querySelector("#clear");
-clearBtn.addEventListener("click", (event) => {
-    if (confirm("Are you sure you want to clear the display?")) {
-        display.textContent = "0";
-        calc.initialState = true;
-        calc.leadingZero = true;
-        calc.previousOp = "none";
-        calc.ans = 0;
-        calc.ansOnDisplay = false;
-        calc.decimalPresent = false;
-        calc.enteringNumber = true;
+clearBtn.addEventListener("click", clearDisplay);
+
+function clearDisplay(warning) {
+    if (warning != false) {
+        if (!confirm("Are you sure you want to clear the display?"))
+            return;
     }
-});
+    display.textContent = "0";
+    calc.initialState = true;
+    calc.leadingZero = true;
+    calc.previousOp = "none";
+    calc.ans = 0;
+    calc.ansOnDisplay = false;
+    calc.decimalPresent = false;
+    calc.enteringNumber = true;
+}
+
+const evaluateBtn = document.querySelector("#equals");
+evaluateBtn.addEventListener("click", () => evaluate(display.textContent));
+
+function evaluate(expression) {
+    const sums = expression.split("\u{002b}");
+    console.log(sums);
+    let sumVals = [];
+    let diffVals = [];
+    sums.forEach(exp => {
+        let diff = exp.split("\u{2212}");
+        sumVals.push(diff[0]);
+        if (diff.length > 1) {
+            for (let i = 1; i < diff.length; ++i) {
+                diffVals.push(`-${diff[i]}`);
+            }
+            return false;
+        }
+        else {
+            console.log("sum: " + sums);
+            return true;
+        }
+
+    });
+    
+    console.log(sumVals);
+    console.log(diffVals);
+
+    
+}
 
 const calc = {
     initialState: true,
