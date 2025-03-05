@@ -13,6 +13,11 @@ function multiply(a, b) {
 }
 
 function divide(a, b) {
+
+    if (b === 0) {
+        return "Error: division by 0";
+    }
+
     return a/b;
 }
 
@@ -48,6 +53,13 @@ function undo(str, n) {
 function enteredDigit(event) {
     event.preventDefault();
     if (event.target.className === "digit") {
+        if (calc.ansOnDisplay) {
+            const tempAns = calc.ans;
+            clearDisplay(false);
+            calc.ans = tempAns;
+        }
+
+
         if (calc.leadingZero) {
             if (display.textContent === "-" && event.target.textContent === "0") {
                 clearDisplay(false);
@@ -94,6 +106,9 @@ function enteredOperator(event) {
             calc.previousOp = "su";
         }
         return;
+    }
+    else if (calc.ansOnDisplay) {
+        calc.ansOnDisplay = false;
     }
 
     if (event.target.className != "operation") return;
@@ -152,11 +167,13 @@ function clearDisplay(warning) {
 }
 
 const evaluateBtn = document.querySelector("#equals");
-evaluateBtn.addEventListener("click", () => evaluate(display.textContent));
+evaluateBtn.addEventListener("click", () => {
+    display.textContent = evaluate(display.textContent);
+});
 
 function evaluate(expression) {
-    const sums = expression.split("\u{002b}");
-    console.log(sums);
+    let sums = expression.split("\u{002b}");
+    // console.log(sums);
     let sumVals = [];
     let diffVals = [];
     sums.forEach(exp => {
@@ -166,20 +183,57 @@ function evaluate(expression) {
             for (let i = 1; i < diff.length; ++i) {
                 diffVals.push(`-${diff[i]}`);
             }
-            return false;
         }
-        else {
-            console.log("sum: " + sums);
-            return true;
-        }
-
     });
     
-    console.log(sumVals);
-    console.log(diffVals);
+    sums = sumVals.concat(diffVals);
+    console.log(sums);
 
+    let MulAndDiv = function(strX) {
+        let vals = strX.split("\u{00d7}");
+        let prodVals = [];
+        let divisors = [];
+        
+        for (let i = 0; i < vals.length; ++i) {
+            let divVals = vals[i].split("\u{00f7}");
+            prodVals.push(divVals[0]);
+            for (let j = 1; j < divVals.length; ++j) {
+                divisors.push(divVals[j]);
+            }
+        }
+
+        let numerator = prodVals.reduce((result, x) => {
+            return multiply(result, Number.parseFloat(x));
+        }, 1);
+        let denominator = divisors.reduce((result, x) => {
+            return multiply(result, Number.parseFloat(x));
+        }, 1);
+
+        // console.log(`num: ${numerator}\ndenom: ${denominator}`);
+
+        // console.log(`prodVals: ${prodVals}\ndivisors: ${divisors}`);
+        // console.log(typeof numerator);
+
+        return divide(numerator, denominator);
+        
+    }
+
+    const terms = sums.map(MulAndDiv);
     
+    result = terms.reduce((accum, x) => add(accum, x), 0);
+
+    calc.ans = result;
+    calc.ansOnDisplay = true;
+    calc.enteringNumber = true;
+    
+
+    return result;
 }
+
+const ansBtn = document.querySelector("#ans");
+ansBtn.addEventListener("click", () => {
+    if (calc.enteringNumber) display.textContent += calc.ans;
+});
 
 const calc = {
     initialState: true,
