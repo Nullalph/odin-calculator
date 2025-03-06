@@ -15,7 +15,7 @@ function multiply(a, b) {
 function divide(a, b) {
 
     if (b === 0) {
-        return "Error: division by 0";
+        return "division by 0";
     }
 
     return a/b;
@@ -44,21 +44,77 @@ function operate(op, x, y) {
 
 const display = document.querySelector("#display");
 
-// let expression = "";
 
 function undo(str, n) {
+   
+    
+
+    if (!calc.initialState && display.textContent.length === n || calc.error) {
+        const temp = calc.ans;
+        console.log(temp);
+        clearDisplay(false);
+        calc.ans = temp;
+        return display.textContent;
+    }
+    else if (display.textContent === "0") {
+        return "";
+    }
+    // console.log(display.textContent.at(-1));
+    switch (display.textContent.at(-1)) {
+        case "\u{002e}":
+            calc.decimalPresent = false;
+            break;
+        case "\u{002b}":
+        case "\u{2212}":
+        case "\u{00d7}":
+        case "\u{00f7}":
+            calc.previousOp = "none";
+            calc.leadingZero = false;
+            break;
+    }
+    switch (display.textContent.at(-2)) {
+        case "\u{002b}":
+            calc.previousOp = "ad";
+            break;
+        case "\u{2212}":
+            calc.previousOp = "su";
+            break;
+        case "\u{00d7}":
+            calc.previousOp = "mu";
+            break;
+        case "\u{00f7}":
+            calc.previousOp = "di";
+            break;
+        default:
+            calc.previousOp = "none";
+    }
+
+    calc.leadingZero = calc.previousOp || display.textContent.at(-2) === "-";
+    
+
+
+
+
     return str.substr(0, str.length - n);
 }
 
 function enteredDigit(event) {
     event.preventDefault();
+
+    if (event.target.id === "pct" && !calc.leadingZero) {
+        display.textContent += event.target.textContent;
+    }
+
     if (event.target.className === "digit") {
+        if (calc.error) {
+            clearDisplay(false);
+        }
+
         if (calc.ansOnDisplay) {
             const tempAns = calc.ans;
             clearDisplay(false);
             calc.ans = tempAns;
         }
-
 
         if (calc.leadingZero) {
             if (display.textContent === "-" && event.target.textContent === "0") {
@@ -104,6 +160,7 @@ function enteredOperator(event) {
             calc.initialState = false;
             calc.enteringNumber = true;
             calc.previousOp = "su";
+            calc.error = false;
         }
         return;
     }
@@ -112,7 +169,7 @@ function enteredOperator(event) {
     }
 
     if (event.target.className != "operation") return;
-    
+  
 
     if (calc.previousOp === "none") {
         display.textContent += event.target.textContent;
@@ -141,16 +198,6 @@ function enteredOperator(event) {
 
 }
 
-// const digits = document.querySelectorAll(".digit");
-const digits = document.querySelector(".digits");
-digits.addEventListener("click", enteredDigit);
-
-const operators = document.querySelector(".operations");
-operators.addEventListener("click", enteredOperator);
-
-const clearBtn = document.querySelector("#clear");
-clearBtn.addEventListener("click", clearDisplay);
-
 function clearDisplay(warning) {
     if (warning != false) {
         if (!confirm("Are you sure you want to clear the display?"))
@@ -164,16 +211,14 @@ function clearDisplay(warning) {
     calc.ansOnDisplay = false;
     calc.decimalPresent = false;
     calc.enteringNumber = true;
+    calc.error = false;
+    calc.errorMsg = "";
 }
 
-const evaluateBtn = document.querySelector("#equals");
-evaluateBtn.addEventListener("click", () => {
-    display.textContent = evaluate(display.textContent);
-});
+
 
 function evaluate(expression) {
     let sums = expression.split("\u{002b}");
-    // console.log(sums);
     let sumVals = [];
     let diffVals = [];
     sums.forEach(exp => {
@@ -190,7 +235,8 @@ function evaluate(expression) {
     console.log(sums);
 
     let MulAndDiv = function(strX) {
-        let vals = strX.split("\u{00d7}");
+        let strY = strX.replace(/%/g, "\u{00d7}0.01");
+        let vals = strY.split("\u{00d7}");
         let prodVals = [];
         let divisors = [];
         
@@ -205,45 +251,90 @@ function evaluate(expression) {
         let numerator = prodVals.reduce((result, x) => {
             return multiply(result, Number.parseFloat(x));
         }, 1);
+        
         let denominator = divisors.reduce((result, x) => {
             return multiply(result, Number.parseFloat(x));
         }, 1);
 
-        // console.log(`num: ${numerator}\ndenom: ${denominator}`);
-
-        // console.log(`prodVals: ${prodVals}\ndivisors: ${divisors}`);
-        // console.log(typeof numerator);
+        if (isNaN(numerator) || isNaN(denominator)) {
+            return calcError("Error");
+        }
+        else if (!denominator) {
+            
+            return calcError("Error: division by 0");
+        }
 
         return divide(numerator, denominator);
         
     }
 
+    
     const terms = sums.map(MulAndDiv);
+    if (calc.error) return calc.errorMsg;
     
     result = terms.reduce((accum, x) => add(accum, x), 0);
 
     calc.ans = result;
     calc.ansOnDisplay = true;
     calc.enteringNumber = true;
+    calc.previousOp = "none";
     
-
+    console.log(calc.ans);
     return result;
 }
 
-const ansBtn = document.querySelector("#ans");
-ansBtn.addEventListener("click", () => {
-    if (calc.enteringNumber) display.textContent += calc.ans;
-});
+function calcError(msg) {
+    calc.initialState = true;
+    calc.ansOnDisplay = false;    
+    calc.leadingZero = true;
+    calc.enteringNumber = true;
+    calc.decimalPresent = false;
+    calc.previousOp = "none";
+    calc.error = true;
+    calc.errorMsg = msg;
+    // display.textContent = msg ? msg : "Error";
+}
+
 
 const calc = {
     initialState: true,
     ans: 0,
     ansOnDisplay: false,
-
     leadingZero: true,
-
     enteringNumber: true,
     decimalPresent: false,
-
     previousOp: "none",
+    error: false,
+    errorMsg: "",
 }
+
+const digits = document.querySelector(".digits");
+digits.addEventListener("click", enteredDigit);
+
+const operators = document.querySelector(".operations");
+operators.addEventListener("click", enteredOperator);
+
+const clearBtn = document.querySelector("#clear");
+clearBtn.addEventListener("click", clearDisplay);
+
+const evaluateBtn = document.querySelector("#equals");
+evaluateBtn.addEventListener("click", () => {
+    display.textContent = evaluate(display.textContent);
+});
+
+const undoBtn = document.querySelector("#undo");
+undoBtn.addEventListener("click", () => display.textContent = undo(display.textContent, 1));
+
+const ansBtn = document.querySelector("#ans");
+ansBtn.addEventListener("click", () => {
+    console.log(calc.previousOp);
+
+    if (calc.previousOp != "none") display.textContent += calc.ans;
+    else if (calc.previousOp === "su" && calc.enteringNumber && calc.ans < 0) {
+        // console.log(typeof calc.ans);
+        calc.previousOp = "ad";
+        calc.ans *= -1;
+        display.textContent = undo(display.textContent, 1) + `${calc.ans}`;
+
+    }
+});
