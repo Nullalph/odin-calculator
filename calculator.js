@@ -48,59 +48,118 @@ const display = document.querySelector("#display");
 function undo(str, n) {
    
     
-
-    if (!calc.initialState && display.textContent.length === n || calc.error) {
-        const temp = calc.ans;
-        console.log(temp);
-        clearDisplay(false);
-        calc.ans = temp;
-        return display.textContent;
-    }
-    else if (display.textContent === "0") {
+    if (str.length === 1 || calc.error) {
         return "";
-    }
-    // console.log(display.textContent.at(-1));
-    switch (display.textContent.at(-1)) {
-        case "\u{002e}":
-            calc.decimalPresent = false;
-            break;
-        case "\u{002b}":
-        case "\u{2212}":
-        case "\u{00d7}":
-        case "\u{00f7}":
-            calc.previousOp = "none";
-            calc.leadingZero = false;
-            break;
-    }
-    switch (display.textContent.at(-2)) {
-        case "\u{002b}":
-            calc.previousOp = "ad";
-            break;
-        case "\u{2212}":
-            calc.previousOp = "su";
-            break;
-        case "\u{00d7}":
-            calc.previousOp = "mu";
-            break;
-        case "\u{00f7}":
-            calc.previousOp = "di";
-            break;
-        default:
-            calc.previousOp = "none";
-    }
-
-    calc.leadingZero = calc.previousOp || display.textContent.at(-2) === "-";
+        // return str.substr(0, str.length - n);
+    }  
+    const regEx = /\d/;
     
+    const char = str.at(-1);
+    if (regEx.test(char)) {
+        let c = str.at(-2);
+        calc.leadingZero = !/\d\./.test(c);
+        if (calc.leadingZero) {
+            switch(c) {
+                case "\u{002b}":
+                    calc.previousOp = "ad";
+                    calc.enteringNumber = false;
+                    break;
+                case "-":
+                case "\u{2212}":
+                    calc.previousOp = "su";
+                    calc.enteringNumber = (c === "-");
+                    break;
+                case "\u{00d7}":
+                    calc.previousOp = "mu";
+                    calc.enteringNumber = false;
+                    break;
+                case "\u{00f7}":
+                    calc.previousOp = "di";
+                    calc.enteringNumber = false;
+                    break;
 
+            }
+        }
+    }
+    else if (char === "\u{002e}") {
+        console.log("decimal deleted");
+        calc.decimalPresent = false;
+        let c = str.at(-2);
+        console.log(c);
+        let postOp = false;
+        calc.leadingZero =
+            /[1-9]/.test(c) ? false :
+            (/[\u{002b}\u{2212}\u{00d7}\u{00f7}-]/u.test(c)) ? true :
+            (c === 0) ? 
+            (str.length >= 3 ? postOp = !/\d/.test(str.at(-3)) : true) : false;
+            // Might need to account for "X." case when X=0.
+            if (postOp) {
+                console.log("worked");
+                switch(str.at(-3)) {
+                    case "\u{002b}":
+                        calc.previousOp = "ad";
+                        calc.enteringNumber = false;
+                        break;
+                    case "-":
+                    case "\u{2212}":
+                        calc.previousOp = "su";
+                        calc.enteringNumber = (str.at(-3) === "-");
+                        break;
+                    case "\u{00d7}":
+                        calc.previousOp = "mu";
+                        calc.enteringNumber = false;
+                        break;
+                    case "\u{00f7}":
+                        calc.previousOp = "di";
+                        calc.enteringNumber = false;
+                        break;
+                }
+            }
+            else if (calc.leadingZero) {
+                console.log("nothing before decimal");
+                
+                switch(c) {
+                    case "\u{002b}":
+                        calc.previousOp = "ad";
+                        calc.enteringNumber = false;
+                        break;
+                    case "-":
+                    case "\u{2212}":
+                        calc.previousOp = "su";
+                        calc.enteringNumber = (c === "-");
+                        break;
+                    case "\u{00d7}":
+                        calc.previousOp = "mu";
+                        calc.enteringNumber = false;
+                        break;
+                    case "\u{00f7}":
+                        calc.previousOp = "di";
+                        calc.enteringNumber = false;
+                        break;
+                    }
+                    console.log(calc.previousOp);
+            }
+    }
+    
+    else if (/[\u{002b}\u{2212}\u{00d7}\u{00f7}]/u.test(char)) {
+        console.log("abc");
+        switch(char) {
+            case "-":
+                calc.enteringNumber = false;
+                calc.previousOp = (str.at(-2) === "\u{00d7}") ? "mu" : "di";
+                break;
+            default:
+                calc.enteringNumber = true;
+                calc.previousOp = "none";
 
+        }
+    }
 
 
     return str.substr(0, str.length - n);
 }
 
 function enteredDigit(event) {
-    event.preventDefault();
-
     if (event.target.id === "pct" && !calc.leadingZero) {
         display.textContent += event.target.textContent;
     }
@@ -118,7 +177,7 @@ function enteredDigit(event) {
 
         if (calc.leadingZero) {
             if (display.textContent === "-" && event.target.textContent === "0") {
-                clearDisplay(false);
+                display.textContent += "0";
                 return;
             }
             switch (event.target.textContent) {
@@ -132,6 +191,7 @@ function enteredDigit(event) {
                         display.textContent + event.target.textContent;
                     calc.initialState = false;
             }
+            calc.enteringNumber = true;
             calc.previousOp = "none";
             return;
         }
@@ -170,7 +230,6 @@ function enteredOperator(event) {
 
     if (event.target.className != "operation") return;
   
-
     if (calc.previousOp === "none") {
         display.textContent += event.target.textContent;
         calc.previousOp = event.target.id;
