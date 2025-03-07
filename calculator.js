@@ -46,10 +46,14 @@ const display = document.querySelector("#display");
 
 
 function undo(str, n) {
-   
+   if (calc.ansOnDisplay && !calc.initialState) {
+        clearDisplay(false);
+        return "0";
+   }
     
     if (str.length === 1 || calc.error) {
-        return "";
+        clearDisplay(false);
+        return "0";
         // return str.substr(0, str.length - n);
     }  
     const regEx = /\d/;
@@ -141,7 +145,7 @@ function undo(str, n) {
             }
     }
     
-    else if (/[\u{002b}\u{2212}\u{00d7}\u{00f7}]/u.test(char)) {
+    else if (/[\u{002b}\u{2212}\u{00d7}\u{00f7}-]/u.test(char)) {
         console.log("abc");
         switch(char) {
             case "-":
@@ -149,7 +153,7 @@ function undo(str, n) {
                 calc.previousOp = (str.at(-2) === "\u{00d7}") ? "mu" : "di";
                 break;
             default:
-                calc.enteringNumber = true;
+                // calc.enteringNumber = true;
                 calc.previousOp = "none";
 
         }
@@ -160,9 +164,7 @@ function undo(str, n) {
 }
 
 function enteredDigit(event) {
-    if (event.target.id === "pct" && !calc.leadingZero) {
-        display.textContent += event.target.textContent;
-    }
+    
 
     if (event.target.className === "digit") {
         if (calc.error) {
@@ -176,18 +178,25 @@ function enteredDigit(event) {
         }
 
         if (calc.leadingZero) {
-            if (display.textContent === "-" && event.target.textContent === "0") {
-                display.textContent += "0";
-                return;
+            // if (display.textContent === "-" && event.target.textContent === "0") {
+            //     display.textContent += "0";
+            //     return;
+            // }
+            if (display.textContent.at(-1) === "\u{0025}") {
+                display.textContent += "\u{00d7}";
+                // calc.previousOp = "mu";
+                calc.initialState = false;
+
             }
             switch (event.target.textContent) {
                 case "0":
-                    display.textContent += (calc.previousOp === "none") ? "" : "0";
+                    display.textContent += (calc.previousOp === "none") ? 
+                        "": "0";
                     break;
                 default:
                     calc.leadingZero = false;
-                    display.textContent = (calc.previousOp === "none") ?
-                        (undo(display.textContent, 1) + event.target.textContent) :
+                    display.textContent = (calc.initialState) ?
+                        event.target.textContent :
                         display.textContent + event.target.textContent;
                     calc.initialState = false;
             }
@@ -199,7 +208,7 @@ function enteredDigit(event) {
         display.textContent += event.target.textContent;
     }
     else if (event.target.id === "decimal") {
-        if (calc.decimalPresent) return;
+        if (calc.decimalPresent || display.textContent.at(-1) === "\u{0025}") return;
         else {
             display.textContent += ".";
             calc.decimalPresent = true;
@@ -266,7 +275,7 @@ function clearDisplay(warning) {
     calc.initialState = true;
     calc.leadingZero = true;
     calc.previousOp = "none";
-    calc.ans = 0;
+    // calc.ans = 0;
     calc.ansOnDisplay = false;
     calc.decimalPresent = false;
     calc.enteringNumber = true;
@@ -389,11 +398,14 @@ ansBtn.addEventListener("click", () => {
     console.log(calc.previousOp);
 
     if (calc.previousOp != "none") display.textContent += calc.ans;
-    else if (calc.previousOp === "su" && calc.enteringNumber && calc.ans < 0) {
-        // console.log(typeof calc.ans);
-        calc.previousOp = "ad";
-        calc.ans *= -1;
-        display.textContent = undo(display.textContent, 1) + `${calc.ans}`;
+    else display.textContent += "\u{00d7}" + calc.ans;
+});
 
-    }
+const percentBtn = document.querySelector("#pct");
+percentBtn.addEventListener("click", (event) => {
+    if (calc.previousOp != "none") return;
+    display.textContent += "\u{0025}";
+    calc.leadingZero = true;
+    calc.ansOnDisplay = false;
+    
 });
