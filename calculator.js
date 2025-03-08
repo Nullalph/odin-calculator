@@ -229,6 +229,9 @@ function enteredDigit(event) {
     else if (id === "decimal") {
         if (calc.decimalPresent || display.textContent.at(-1) === "\u{0025}") return;
         else {
+            if (display.textContent.at(-1) === "s") {
+                display.textContent += "\u{00d7}";
+            }
             display.textContent += ".";
             calc.decimalPresent = true;
             calc.leadingZero = false;
@@ -434,6 +437,8 @@ ansBtn.addEventListener("click", () => {
     else if (calc.previousOp != "none") display.textContent += "Ans";
     else display.textContent += "\u{00d7}" + "Ans";
     calc.previousOp = "none";
+    calc.decimalPresent = false;
+    calc.enteringNumber = true;
 });
 
 const percentBtn = document.querySelector("#pct");
@@ -448,7 +453,7 @@ percentBtn.addEventListener("click", (event) => {
 document.addEventListener("keydown", (event) => {
     const calcInput = new Event("click");
 
-    if (/[\d\.]/.test(event.key)) { 
+    if (/[\d\.]/.test(event.key) && event.key.length === 1) { 
         calcInput.digit = event.key;
         digits.dispatchEvent(calcInput);
         return;
@@ -480,19 +485,23 @@ document.addEventListener("keydown", (event) => {
         percentBtn.dispatchEvent(calcInput);
         return;
     }
+    else {
 
-    switch (event.code) {
-        case "KeyA":
-            ansBtn.dispatchEvent(calcInput);
-            return;
-        case "Backspace":
-            undoBtn.dispatchEvent(calcInput);
-            return;
-        case "Equal":
-        case "Enter":
-            evaluateBtn.dispatchEvent(calcInput);
-            return;
-        default: return;
+        switch (event.code) {
+            case "KeyA":
+                ansBtn.dispatchEvent(calcInput);
+                return;
+            case "Backspace":
+                undoBtn.dispatchEvent(calcInput);
+                return;
+            case "Equal":
+            case "Enter":
+                evaluateBtn.dispatchEvent(calcInput);
+                return;
+            
+        }
+        return;
     }
+
 
 });
