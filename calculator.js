@@ -164,9 +164,16 @@ function undo(str, n) {
 }
 
 function enteredDigit(event) {
-    
+    let input = event.target.textContent;
+    let className = event.target.className;
+    let id = event.target.id;
+    if (!event.isTrusted) {
+        input = event.digit;
+        className = (input === "\u{002e}") ? "inputs" : "digit";
+        id = "decimal";
+    }
 
-    if (event.target.className === "digit") {
+    if (className === "digit") {
         if (calc.error) {
             clearDisplay(false);
         }
@@ -188,7 +195,7 @@ function enteredDigit(event) {
                 calc.initialState = false;
 
             }
-            switch (event.target.textContent) {
+            switch (input) {
                 case "0":
                     display.textContent += (calc.previousOp === "none") ? 
                         "": "0";
@@ -196,8 +203,8 @@ function enteredDigit(event) {
                 default:
                     calc.leadingZero = false;
                     display.textContent = (calc.initialState) ?
-                        event.target.textContent :
-                        display.textContent + event.target.textContent;
+                    input :
+                        display.textContent + input;
                     calc.initialState = false;
             }
             calc.enteringNumber = true;
@@ -205,9 +212,9 @@ function enteredDigit(event) {
             return;
         }
         calc.previousOp = "none";
-        display.textContent += event.target.textContent;
+        display.textContent += input;
     }
-    else if (event.target.id === "decimal") {
+    else if (id === "decimal") {
         if (calc.decimalPresent || display.textContent.at(-1) === "\u{0025}") return;
         else {
             display.textContent += ".";
@@ -222,9 +229,18 @@ function enteredDigit(event) {
 }
 
 function enteredOperator(event) {
+    let input = event.target.textContent;
+    let className = event.target.className;
+    let id = event.target.id;
+    if (!event.isTrusted) {
+        input = event.operator;
+        className = "operation";
+        id = event.opID;
+    }
+
     event.preventDefault();
     if (calc.initialState) {
-        if (event.target.id === "su") {
+        if (id === "su") {
             display.textContent = "-";
             calc.initialState = false;
             calc.enteringNumber = true;
@@ -237,11 +253,11 @@ function enteredOperator(event) {
         calc.ansOnDisplay = false;
     }
 
-    if (event.target.className != "operation") return;
+    if (className != "operation") return;
   
     if (calc.previousOp === "none") {
-        display.textContent += event.target.textContent;
-        calc.previousOp = event.target.id;
+        display.textContent += input;
+        calc.previousOp = id;
         calc.enteringNumber = false;
         calc.leadingZero = true;
         calc.decimalPresent = false;
@@ -253,17 +269,13 @@ function enteredOperator(event) {
     switch (calc.previousOp) {
         case "mu":
         case "di":
-            calc.enteringNumber = (event.target.id === "su");
+            calc.enteringNumber = (id === "su");
         default:
             display.textContent = !calc.enteringNumber ?
-                (undo(display.textContent, 1) + event.target.textContent) :
+                (undo(display.textContent, 1) + input) :
                 display.textContent + "-";
-            calc.previousOp = event.target.id;
+            calc.previousOp = id;
     }
-
-
-
-
 }
 
 function clearDisplay(warning) {
@@ -282,8 +294,6 @@ function clearDisplay(warning) {
     calc.error = false;
     calc.errorMsg = "";
 }
-
-
 
 function evaluate(expression) {
     let sums = expression.split("\u{002b}");
@@ -395,7 +405,7 @@ undoBtn.addEventListener("click", () => display.textContent = undo(display.textC
 
 const ansBtn = document.querySelector("#ans");
 ansBtn.addEventListener("click", () => {
-    console.log(calc.previousOp);
+    // console.log(calc.previousOp);
 
     if (calc.previousOp != "none") display.textContent += calc.ans;
     else display.textContent += "\u{00d7}" + calc.ans;
@@ -408,4 +418,56 @@ percentBtn.addEventListener("click", (event) => {
     calc.leadingZero = true;
     calc.ansOnDisplay = false;
     
+});
+
+document.addEventListener("keydown", (event) => {
+    const calcInput = new Event("click");
+
+    if (/[\d\.]/.test(event.key)) { 
+        calcInput.digit = event.key;
+        digits.dispatchEvent(calcInput);
+        return;
+    }
+
+    else if (/[+\-\*\/]/.test(event.key)) {
+        switch (event.key) {
+            case "+":
+                calcInput.operator = "\u{002b}";
+                calcInput.opID = "ad";
+                break;
+            case "-":
+                calcInput.operator = "\u{2212}";
+                calcInput.opID = "su";
+                break;
+            case "*":
+                calcInput.operator = "\u{00d7}";
+                calcInput.opID = "mu";
+                break;
+            case "/":
+                calcInput.opID = "di";
+                calcInput.operator = "\u{00f7}";
+        }
+        operators.dispatchEvent(calcInput);
+        return;
+    }
+
+    else if (event.key === "%") {
+        percentBtn.dispatchEvent(calcInput);
+        return;
+    }
+
+    switch (event.code) {
+        case "KeyA":
+            ansBtn.dispatchEvent(calcInput);
+            return;
+        case "Backspace":
+            undoBtn.dispatchEvent(calcInput);
+            return;
+        case "Equal":
+        case "Enter":
+            evaluateBtn.dispatchEvent(calcInput);
+            return;
+            
+    }
+
 });
