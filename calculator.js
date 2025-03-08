@@ -46,16 +46,22 @@ const display = document.querySelector("#display");
 
 
 function undo(str, n) {
-   if (calc.ansOnDisplay && !calc.initialState) {
+
+    if (calc.ansOnDisplay && !calc.initialState) {
         clearDisplay(false);
         return "0";
-   }
+    }
+    
     
     if (str.length === 1 || calc.error) {
         clearDisplay(false);
         return "0";
         // return str.substr(0, str.length - n);
     }  
+
+    if (str.at(-1) === "s") {
+        return str.substring(0, str.length - 3);
+    }
     const regEx = /\d/;
     
     const char = str.at(-1);
@@ -178,11 +184,17 @@ function enteredDigit(event) {
             clearDisplay(false);
         }
 
-        if (calc.ansOnDisplay) {
+        if (display.textContent.at(-1) === "s") {
+            display.textContent += "\u{00d7}";
+            calc.ansOnDisplay = false;
+        }
+
+        else if (calc.ansOnDisplay) {
             const tempAns = calc.ans;
             clearDisplay(false);
             calc.ans = tempAns;
         }
+
 
         if (calc.leadingZero) {
             // if (display.textContent === "-" && event.target.textContent === "0") {
@@ -314,6 +326,14 @@ function evaluate(expression) {
 
     let MulAndDiv = function(strX) {
         let strY = strX.replace(/%/g, "\u{00d7}0.01");
+
+        if (calc.ans < 0) {
+            console.log(strY);
+            strY = strY.replace(/[-\u{2212}]Ans/g, -1*calc.ans);
+            console.log(strY);
+        }
+
+        strY = strY.replace(/Ans/g, calc.ans);
         let vals = strY.split("\u{00d7}");
         let prodVals = [];
         let divisors = [];
@@ -406,9 +426,14 @@ undoBtn.addEventListener("click", () => display.textContent = undo(display.textC
 const ansBtn = document.querySelector("#ans");
 ansBtn.addEventListener("click", () => {
     // console.log(calc.previousOp);
-
-    if (calc.previousOp != "none") display.textContent += calc.ans;
-    else display.textContent += "\u{00d7}" + calc.ans;
+    if (calc.initialState) {
+        display.textContent = "Ans";
+        calc.initialState = false;
+        // calc.ansOnDisplay = true;
+    }
+    else if (calc.previousOp != "none") display.textContent += "Ans";
+    else display.textContent += "\u{00d7}" + "Ans";
+    calc.previousOp = "none";
 });
 
 const percentBtn = document.querySelector("#pct");
@@ -467,7 +492,7 @@ document.addEventListener("keydown", (event) => {
         case "Enter":
             evaluateBtn.dispatchEvent(calcInput);
             return;
-            
+        default: return;
     }
 
 });
